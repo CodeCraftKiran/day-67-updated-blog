@@ -72,7 +72,8 @@ def add_new_post():
         body = request.form.get('body')
         current_date = date.today().strftime("%B, %d, %Y")
 
-        new_post = BlogPost(title=title, subtitle=subtitle, author=author_name,date=current_date, img_url=image_url, body=body)
+        new_post = BlogPost(title=title, subtitle=subtitle, author=author_name, date=current_date, img_url=image_url,
+                            body=body)
         db.session.add(new_post)
         db.session.commit()
         return redirect(url_for('get_all_posts'))
@@ -81,8 +82,37 @@ def add_new_post():
 
 
 # TODO: edit_post() to change an existing blog post
+@app.route("/edit-post/<int:post_id>", methods=['GET', 'POST'])
+def edit_post(post_id):
+    post = db.get_or_404(BlogPost, post_id)
+    edit_form = NewPostForm(
+        title=post.title,
+        subtitle=post.subtitle,
+        image_url=post.img_url,
+        author_name=post.author,
+        body=post.body
+    )
+    if edit_form.validate_on_submit():
+        post.title = edit_form.title.data
+        post.subtitle = edit_form.subtitle.data
+        post.img_url = edit_form.image_url.data
+        post.author = edit_form.author_name.data
+        post.body = edit_form.body.data
+        db.session.commit()
+        return redirect(url_for('show_post', post_id=post.id))
+
+    return render_template("make-post.html", is_true=True, form=edit_form)
+
 
 # TODO: delete_post() to remove a blog post from the database
+@app.route('/delete')
+def delete_post():
+    post_id = request.args.get('post_id')
+    post = db.get_or_404(BlogPost, post_id)
+    db.session.delete(post)
+    db.session.commit()
+    return redirect(url_for('get_all_posts'))
+
 
 # Below is the code from previous lessons. No changes needed.
 @app.route("/about")
